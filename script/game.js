@@ -196,4 +196,4 @@ function main_function() {
 	window.requestAnimationFrame(step);
 };
 
-loadScripts(["script/debug.js", "script/sprite.js", "script/world.js","script/Menu.js"], main_function);
+//loadScripts(["script/debug.js", "script/sprite.js", "script/world.js","script/Menu.js"], main_function);

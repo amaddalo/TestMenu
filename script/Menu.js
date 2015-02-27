@@ -3,6 +3,13 @@
  */
 "use strict";
 
+var Menu= function(canvas,ctx){
+	this.canvas=canvas;
+	this.ctx=ctx;
+	this.clickables=[];
+	
+}
+
 function draw_border(canvas, ctx) {
 	ctx.strokeStyle = "#000000";
 	ctx.beginPath();
@@ -12,31 +19,42 @@ function draw_border(canvas, ctx) {
 	ctx.lineTo(0, canvas.height);
 	ctx.lineTo(0, 0);
 	ctx.stroke();
-};
-function draw_Menu(canvas,ctx){
-	//ctx.fillStyle="#FFFFFF";
-	//ctx.fillRect(0, 0, canvas.width, canvas.height);
-	//load img
-	var path="playbutton";
-	var head = document.getElementsByTagName('head')[0];
-	var img = new Image();
-	img.src = "resource/" + path + ".png";
-	img.name = path;
-	//img.onload = function() {sprites[this.name] = this; sprites_loaded++;};
-	head.appendChild(img);
-	
-	//draw img
-	ctx.drawImage(img,0,0);
 }
-function load(){
-	var the_canvas = document.getElementById("game_canvas");
-	var the_ctx = the_canvas.getContext("2d");
-	draw_border(the_canvas,the_ctx);
-	draw_Menu(the_canvas,the_ctx);	
+function draw_Menu(canvas, ctx){
+	ctx.fillStyle="#FFFFFF";
+	ctx.fillRect(0, 0, canvas.width, canvas.height);
+	playBut=new sprites["playbutton"];
+	ctx.drawImage(playBut,0,0);
+}
+function clickedOn(element, mousePos) {
+    var minX = element.x;
+    var minY = element.y;
+    var maxX = element.x + element.width;
+    var maxY = element.y + element.height;
+    //stuff is square despite appearance
+    var mouseX = mousePos.x;
+    var mouseY = mousePos.y;
+    if (mouseX >= minX && mouseX <= maxX && mouseY >= minY && mouseY <= maxY) {
+        return true;
+    }
+    return false;
+}
+
+Menu.prototype.load= function(){
+
+	draw_Menu(this.canvas, this.ctx);	
+	draw_border(this.canvas,this.ctx);
+	var mousePos={x: 0, y: 0};
+	var v;
 	the_canvas.onmousedown = function(e) {
 		if(e.button==0){
-			
+			mousePos = {x: e.offsetX, y: e.offsetY};
+			for (v in clickables){
+				derp=clickables[v];
+				if(clickedOn(derp,mousePos)){
+					
+				}
+			}
 		}
 	}
 }
-load();
