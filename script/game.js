@@ -143,6 +143,7 @@ function main_function() {
 	var mouse_pos = {x: 0, y: 0};
 	var drag_pos = null;
 	var dragging_board = false;
+	
 	the_canvas.onmousemove = function(e) {
 		if (e.layerX != undefined) {
 			mouse_pos = {x: e.layerX, y: e.layerY};
@@ -195,4 +196,4 @@ function main_function() {
 	window.requestAnimationFrame(step);
 };
 
-loadScripts(["script/debug.js", "script/sprite.js", "script/world.js"], main_function);
+loadScripts(["script/debug.js", "script/sprite.js", "script/world.js","script/Menu.js"], main_function);
