@@ -63,8 +63,7 @@ function draw_loadingbar(canvas, ctx, status) {
 }
 
 function main_function() {
-	//testing code, this crap better not be in our final build
-	//who am I kidding most of this will end up in it in some modified form
+	//this is no longer testing code
 	var the_canvas = document.getElementById("game_canvas");
 	var the_ctx = the_canvas.getContext("2d");
 	//OH GOD BROWSERS
@@ -72,60 +71,60 @@ function main_function() {
 	the_ctx.mozImageSmoothingEnabled = false;
 	the_ctx.webkitImageSmoothingEnabled = false;
 	
-	//bad smelly testing shit
-	var global_yaw = Math.PI*.25;
-	var global_pitch = Math.PI*.4;
-	
-	var d_yaw = 0;
-	var d_pitch = 0;
-	
-	//still smelly test shit
-	//hardcoding a level yeaaaaaa
-	var test_world = new World(9, 9);
-	test_world.cells[1][0] = "human";
-	test_world.cells[1][2] = "explosive";
-	test_world.cells[3][1] = "explosive";
-	test_world.cells[3][2] = "explosive";
-	test_world.cells[4][2] = "explosive";
-	test_world.cells[4][3] = "explosive";
-	test_world.cells[5][3] = "explosive";
-	test_world.cells[5][4] = "explosive";
-	test_world.cells[5][5] = "explosive";
-	
-	//TESTING CODE
-	function do_render(state, ms, canvas, ctx) {
-		ctx.fillStyle = "#FFFFFF";
-		ctx.fillRect(0, 0, canvas.width, canvas.height);
-		//ctx.fillStyle = "#000000";
-		//ctx.fillText("seconds: " + Math.floor(ms/10)/100, 0, 10);
-		
-		test_world.draw(ctx, canvas.width/2, canvas.height/2, 48, global_yaw+d_yaw, global_pitch+d_pitch);
-	}
+	var state_stack = [];
+	function stack_top() {return state_stack[state_stack.length-1];};
+	function push_state(state) {
+		state_stack.push(state);
+	};
+	function pop_state(state) {
+		if (stack_top() === state) { //because encapsulation
+			state_stack.pop();
+		}
+	};
+	state_stack.push(new WorldState(9, 9, the_canvas, push_state, pop_state));
 	
 	var loading = null;
 	var get_loadstatus = null;
 	
 	var last_timestamp = null;
 	function step(frame_begin) {
+		//clear framebuffer
+		the_ctx.fillStyle = "#FFFFFF";
+		the_ctx.clearRect(0, 0, the_canvas.width, the_canvas.height);
+		
 		if (loading == false) { //this is perverse but somehow it turns me on
 			if (last_timestamp == null) last_timestamp = frame_begin;
-			var state_time = window.performance.now()-last_timestamp;
 			
-			if (dragging_board) {
-				d_yaw = -Math.PI*(mouse_pos.x-drag_pos.x)/(the_canvas.width);
-				d_pitch = -.5*Math.PI*(mouse_pos.y-drag_pos.y)/(the_canvas.height);
-				if (global_pitch+d_pitch > Math.PI/2) d_pitch = (Math.PI/2)-global_pitch;
-				if (global_pitch+d_pitch < 0) d_pitch = -global_pitch;
+			if (stack_top().type != "world") {
+				var w_id = 0;
+				while (state_stack[w_id].type != "world") {
+					w_id++;
+					if (w_id > state_stack.length) {
+						console.log("something terrible happened");
+						break;
+					}
+				}
+				last_timestamp = frame_begin-state_stack[w_id].state_time;
+			} else if (stack_top().world.action_queue.length == 0) {
+				last_timestamp = frame_begin;
+			} else if (stack_top().state_max == null) { //idle
+				stack_top().state_time = 0;
+			} else if (stack_top().state_time >= stack_top().state_max) { //ready to advance
+				stack_top().state_time = 0;
+				stack_top().advance();
+				last_timestamp = frame_begin;
+			} else { //transitioning
+				stack_top().valid_move = false;
+				stack_top().state_time = window.performance.now()-last_timestamp;
 			}
 			
-			//this shit depends on world.js, remove (or modify) once we kill all the debug code
-			//test_loc = test_world.screen_to_world(mouse_pos, the_canvas.width/2, the_canvas.height/2, 48, global_yaw, global_pitch);
-			
-			//will need more complex logic here eventually, but for now all state happens instantly
-			test_world.advance_state();
-			
-			do_render(null, state_time, the_canvas, the_ctx);
+			var bottom_state = state_stack.length-1;
+			while (bottom_state > 0 && state_stack[bottom_state].draw_children) bottom_state--;
+			for (var i = bottom_state; i < state_stack.length; i++) {
+				state_stack[i].draw(the_canvas, the_ctx);
+			}
 		} else if (loading == null) {
+			//Anthony: Could we load sprites outside of the animationframe step? I'd prefer to not have to Load sprites in the menu's constructor
 			loading = true;
 			get_loadstatus = load_sprites();
 		} else {
@@ -140,60 +139,58 @@ function main_function() {
 		window.requestAnimationFrame(step);
 	}
 	
-	var mouse_pos = {x: 0, y: 0};
-	var drag_pos = null;
-	var dragging_board = false;
-	
 	the_canvas.onmousemove = function(e) {
-		if (e.layerX != undefined) {
-			mouse_pos = {x: e.layerX, y: e.layerY};
-		} else {
-			mouse_pos = {x: e.offsetX, y: e.offsetY};
+		if (e.layerX == undefined) {
+			e.layerX = e.offsetX;
+			e.layerY = e.offsetY;
 		}
+		stack_top().onmousemove(e);
 	};
 	the_canvas.onmousedown = function(e) {
 		//e.button == 0 -> left mouse button
-		this.onmousemove(e);
-		if (e.button == 0) {
-			if (drag_pos != null) {
-				console.log("Something broke! (double drag init)");
-			}
-			drag_pos = {x: mouse_pos.x, y: mouse_pos.y}; //good god js is horrifying
-			
-			var world_loc = test_world.screen_to_world(mouse_pos, the_canvas.width/2, the_canvas.height/2, 48, global_yaw, global_pitch);
-			if (world_loc.x < 0 || world_loc.x > test_world.w ||
-				world_loc.y < 0 || world_loc.y > test_world.h) {
-				dragging_board = true;
-			}
+		if (e.layerX == undefined) {
+			e.layerX = e.offsetX;
+			e.layerY = e.offsetY;
 		}
+		stack_top().onmousemove(e);
+		stack_top().onmousedown(e);
 	};
 	the_canvas.onmouseup = function(e) {
-		this.onmousemove(e);
-		if (e.button == 0) {
-			if (drag_pos == null) {
-				//this is actually pretty normal
-				//console.log("Something broke! (double drag release)");
-			} else if (dragging_board == false) {
-				//moooore smelly testing code
-				test_world.handle_input(test_world.screen_to_world(drag_pos, the_canvas.width/2, the_canvas.height/2, 48, global_yaw, global_pitch),
-										test_world.screen_to_world(mouse_pos, the_canvas.width/2, the_canvas.height/2, 48, global_yaw, global_pitch));
-			} else {
-				global_yaw += d_yaw;
-				global_pitch += d_pitch;
-				while (global_yaw > Math.PI*2) global_yaw -= Math.PI*2;
-				while (global_yaw < 0) global_yaw += Math.PI*2;
-				d_yaw = 0;
-				d_pitch = 0;
-			}
-			
-			drag_pos = null;
-			dragging_board = false;
+		if (e.layerX == undefined) {
+			e.layerX = e.offsetX;
+			e.layerY = e.offsetY;
 		}
+		stack_top().onmousemove(e);
+		stack_top().onmouseup(e);
 	};
+	
+	var mouse_in = false;
 	the_canvas.onmouseout = function(e) {
-		the_canvas.onmouseup(e);
+		mouse_in = false;
+		if (e.layerX == undefined) {
+			e.layerX = e.offsetX;
+			e.layerY = e.offsetY;
+		}
+		stack_top().onmousemove(e);
+		stack_top().onmouseout(e);
 	};
+	the_canvas.onmouseover = function(e) {
+		mouse_in = true;
+	};
+	
+	//ugly key handling input. why oh why does js have to repeat keydown events???
+	var last_keycode = null;
+	window.addEventListener('keyup', function(e) {last_keycode = null;});
+	window.addEventListener('keydown', function(e) {
+		if (mouse_in && e.keyCode != last_keycode) {
+			stack_top().onkeydown(e.key);
+		}
+		last_keycode = e.keyCode;
+	}, false);
 	window.requestAnimationFrame(step);
 };
 
-//loadScripts(["script/debug.js", "script/sprite.js", "script/world.js","script/Menu.js"], main_function);
+if (document.getElementById("game_canvas").getContext != undefined)
+	loadScripts([	"script/debug.js", "script/sprite.js", "script/world.js",
+					"script/state.js", "script/worldstate.js", "script/pausestate.js",
+				], main_function);
