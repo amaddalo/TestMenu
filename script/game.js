@@ -81,7 +81,10 @@ function main_function() {
 			state_stack.pop();
 		}
 	};
-	state_stack.push(new WorldState(9, 9, the_canvas, push_state, pop_state));
+	
+	//testing
+	//state_stack.push(new WorldState(9, 9, the_canvas, push_state, pop_state));
+	state_stack.push(new MenuState(the_canvas, push_state, pop_state));
 	
 	var loading = null;
 	var get_loadstatus = null;
@@ -124,7 +127,6 @@ function main_function() {
 				state_stack[i].draw(the_canvas, the_ctx);
 			}
 		} else if (loading == null) {
-			//Anthony: Could we load sprites outside of the animationframe step? I'd prefer to not have to Load sprites in the menu's constructor
 			loading = true;
 			get_loadstatus = load_sprites();
 		} else {
@@ -191,6 +193,7 @@ function main_function() {
 };
 
 if (document.getElementById("game_canvas").getContext != undefined)
-	loadScripts([	"script/debug.js", "script/sprite.js", "script/world.js",
+	loadScripts([	"script/debug.js", "script/sprite.js", "script/world.js", "script/world_draw.js",
 					"script/state.js", "script/worldstate.js", "script/pausestate.js",
+					"script/levels.js","script/menustate.js",
 				], main_function);

@@ -39,7 +39,7 @@ MenuState.prototype.draw=function(canvas,ctx){
 	this.levelSelectCoords[0]=[canvas.width-this.levelSelectBut.width, this.playButtonCoords[1][1]+5];
 	this.levelSelectCoords[1]=[this.levelSelectCoords[0][0]+this.levelSelectBut.width,this.levelSelectCoords[0][1]+this.levelSelectBut.height];
 	this.aboutButtonCoords[0]=[canvas.width-this.aboutBut.width,this.levelSelectCoords[1][1]+5];
-	this.aboutButtonCoords[1]=[this.aboutButtonCoords[0][0]+this.aboutBut.width,this.aboutButtonCoords[0][1]+this.aboutBut.height;
+	this.aboutButtonCoords[1]=[this.aboutButtonCoords[0][0]+this.aboutBut.width,this.aboutButtonCoords[0][1]+this.aboutBut.height];
 	
 	console.log(this.playButtonCoords,"  +  ",this.levelSelectCoords,"  +  ",this.aboutButtonCoords);
 	
@@ -56,10 +56,10 @@ MenuState.prototype.onclick = function(e){
 		//check what button if any
 		for(var but in this.clickables){
 			console.log(but);
-			var minX=this.clickables[but[0][0];
-			var minY=this.clickables[but[0][0];
-			var maxX=this.clickables[but[1][0];
-			var maxY=this.clickables[but[1][1];
+			var minX=this.clickables[but[0][0]];
+			var minY=this.clickables[but[0][0]];
+			var maxX=this.clickables[but[1][0]];
+			var maxY=this.clickables[but[1][1]];
 			if (e.x >= minX && e.x <= maxX && e.y >= minY && e.y <= maxY){
 				//button clicked 
 				console.log(but);	
