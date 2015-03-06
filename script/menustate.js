@@ -7,10 +7,15 @@ function MenuState(canvas, push_state,pop_state) {
 	this.levelSelectBut=null;
 	this.aboutBut=null;
 	this.logo=null;
-	//Could use the Sprites being loaded before menu was to be newed. Could we do that before doing new worldstate or menustate? 
-	//sprite[] don't keep track of (x.y) location on canvas so drawing images in relation to one another doesn't work
-	//Which for small amount of Sprites doesn't really matter.
-	//Need to figure out way to use onlick methods of ctx drawn image objects since can't do the little alchemy detection without usable (x,y) locations
+	//Set up 3 button location infos get the info in the draw method
+	//First tuple is min coords and second tuple is max coords
+	this.playButtonCoords=[[0,0],[0,0],"play"];
+	
+	this.aboutButtonCoords=[[0,0],[0,0],"about"];
+	
+	this.levelSelectCoords=[[0,0],[0,0],"level"];
+	
+	this.clickables.push(this.playButtonCoords,this.aboutButtonCoords,this.levelSelectCoords);
 	
 }
 
@@ -19,24 +24,31 @@ MenuState.prototype.constructor=MenuState;
 
 MenuState.prototype.draw=function(canvas,ctx){
 	//background, logo, play, Level Select, about
-	//Dont particularly need to have this redrawn with each step but rather only when state changes
 	ctx.fillStyle="#FFFFFF";
 	ctx.fillRect(0, 0, canvas.width, canvas.height);
 	//logo=sprites["Logo"];
 	//ctx.drawImage(this.logo,0,0);
 	
-	//DONT LIKE HAVING THIS OVER AND OVER IN DRAW BUT CANT HAVE IT IN NEW BECAUSE SPRITES AREN'T LOADED WHEN MENUSTATE IS FIRST MADE'
 	this.playBut=sprites["PlayButton"];
 	this.levelSelectBut=sprites["LevelButton"];
 	this.aboutBut=sprites["AboutButton"];
+	
+	//Assigning coords in the case of scaling images or canvas
+	this.playButtonCoords[0]=[canvas.width-this.playBut.width,0];
+	this.playButtonCoords[1]=[this.playButtonCoords[0][0]+this.playBut.width, this.playButtonCoords[0][1]+ this.playBut.height];
+	this.levelSelectCoords[0]=[canvas.width-this.levelSelectBut.width, this.playButtonCoords[1][1]+5];
+	this.levelSelectCoords[1]=[this.levelSelectCoords[0][0]+this.levelSelectBut.width,this.levelSelectCoords[0][1]+this.levelSelectBut.height];
+	this.aboutButtonCoords[0]=[canvas.width-this.aboutBut.width,this.levelSelectCoords[1][1]+5];
+	this.aboutButtonCoords[1]=[this.aboutButtonCoords[0][0]+this.aboutBut.width,this.aboutButtonCoords[0][1]+this.aboutBut.height;
+	
+	console.log(this.playButtonCoords,"  +  ",this.levelSelectCoords,"  +  ",this.aboutButtonCoords);
+	
+	
+	ctx.drawImage(this.playBut, this.playButtonCoords[0][0] ,this.playButtonCoords[0][1]);
 
+	ctx.drawImage(this.levelSelectBut, this.levelSelectCoords[0][0], this.levelSelectCoords[0][1]);
 
-	ctx.drawImage(this.playBut, canvas.width-this.playBut.width ,0);
-	//Gets 0,0
-	//console.log(this.playBut.x," ",this.playBut.y);
-	ctx.drawImage(this.levelSelectBut, canvas.width-this.levelSelectBut.width, this.playBut.y+this.playBut.height+5);
-	//console.log(this.levelSelectBut.x," ",this.levelSelectBut.y);
-	ctx.drawImage(this.aboutBut,canvas.width-this.aboutBut.width,this.playBut.height+5+this.levelSelectBut.height+5);
+	ctx.drawImage(this.aboutBut,this.aboutButtonCoords[0][0],this.aboutButtonCoords[0][1]);
 
 };
 MenuState.prototype.onclick = function(e){
@@ -44,13 +56,26 @@ MenuState.prototype.onclick = function(e){
 		//check what button if any
 		for(var but in this.clickables){
 			console.log(but);
-			var minX=this.clickables[but].x;
-			var minY=this.clickables[but].y;
-			var maxX=this.clickables[but].x+this.clickables[but].width;
-			var maxY=this.clickables[but].y+this.clickables[but].height;
+			var minX=this.clickables[but[0][0];
+			var minY=this.clickables[but[0][0];
+			var maxX=this.clickables[but[1][0];
+			var maxY=this.clickables[but[1][1];
 			if (e.x >= minX && e.x <= maxX && e.y >= minY && e.y <= maxY){
-				//button clicked
-				console.log(but);		
+				//button clicked 
+				console.log(but);	
+				switch(this.clickables[but[2]]){
+				case "play":
+				//new world state on level 1
+					this.push_state(new WorldState(9,9,this.canvas,push_state,pop_state));
+					break;
+				case "about":
+					//this.push_state(new AboutState(this.push_state,this.pop_state));
+					break;
+				case "level":
+					//this.push_state(new LevelSelectState(this.push_state,this.pop_state));
+					break;
+				
+				}
 				break;
 			}	
 		}
